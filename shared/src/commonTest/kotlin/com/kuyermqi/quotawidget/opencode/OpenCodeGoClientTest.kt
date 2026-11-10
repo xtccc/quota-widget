@@ -1,122 +1,78 @@
 package com.kuyermqi.quotawidget.opencode
 
+import com.kuyermqi.quotawidget.domain.QuotaWindowKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class OpenCodeGoClientTest {
     @Test
-    fun extractWorkspaceId_fromWorkspaceUrl() {
+    fun usageUrl_pointsToZenGoEndpoint() {
         assertEquals(
-            "wrk_01ABC",
-            OpenCodeGoClient.extractWorkspaceId("https://opencode.ai/workspace/wrk_01ABC"),
-        )
-        assertEquals(
-            "wrk_01ABC",
-            OpenCodeGoClient.extractWorkspaceId("https://opencode.ai/workspace/wrk_01ABC/"),
-        )
-        assertEquals(
-            "wrk_01ABC",
-            OpenCodeGoClient.extractWorkspaceId("https://opencode.ai/workspace/wrk_01ABC/go"),
-        )
-        assertEquals(
-            "wrk_01ABC",
-            OpenCodeGoClient.extractWorkspaceId("https://opencode.ai/workspace/wrk_01ABC/go?x=1"),
-        )
-        assertTrue(OpenCodeGoClient.isLoginSuccessUrl("https://opencode.ai/workspace/wrk_xyz"))
-        assertTrue(OpenCodeGoClient.isLoginSuccessUrl("https://opencode.ai/workspace/wrk_xyz/go"))
-        assertFalse(OpenCodeGoClient.isLoginSuccessUrl("https://opencode.ai/auth"))
-        assertNull(OpenCodeGoClient.extractWorkspaceId("https://opencode.ai/auth"))
-    }
-
-    @Test
-    fun extractAuthCookie_fromHeader() {
-        assertEquals(
-            "secret-value",
-            OpenCodeGoClient.extractAuthCookie("foo=1; auth=secret-value; bar=2"),
-        )
-        assertNull(OpenCodeGoClient.extractAuthCookie("foo=1; bar=2"))
-        assertEquals(
-            "auth=secret-value; foo=1",
-            OpenCodeGoClient.cookieHeaderFor("auth=secret-value; foo=1"),
-        )
-        assertEquals("auth=token", OpenCodeGoClient.cookieHeaderFor("token"))
-    }
-
-    @Test
-    fun findServerFnId_fromCreateServerReference() {
-        val legacy = """export const q = createServerReference(fn, "abc123/lite", "default");"""
-        assertEquals("abc123/lite#default", OpenCodeGoClient.findServerFnIdInText(legacy))
-
-        val hash = """
-            const queryLiteSubscription_query = createServerReference("c7389bd0e731f80f49593e5ee53835475f4e28594dd6bd83eb229bab753498cd");
-            const other = createServerReference("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        """.trimIndent()
-        assertEquals(
-            "c7389bd0e731f80f49593e5ee53835475f4e28594dd6bd83eb229bab753498cd",
-            OpenCodeGoClient.findServerFnIdInText(hash),
+            "https://opencode.ai/zen/go/v1/usage",
+            OpenCodeGoClient.USAGE_URL,
         )
     }
 
     @Test
-    fun encodeServerFnArgs_serovalJsonShape() {
-        val encoded = OpenCodeGoClient.encodeServerFnArgs("wrk_01ABC")
-        assertTrue(encoded.contains("\"s\":\"wrk_01ABC\""))
-        assertTrue(encoded.startsWith("""{"t":{"t":9"""))
-        assertTrue(OpenCodeGoClient.encodeEmptyServerFnArgs().contains("\"a\":[]"))
+    fun toWindows_mapsRollingWeeklyMonthly() {
+        val usage = ZenGoUsage(
+            rolling = ZenGoWindow(status = "ok", percent = 1.0, resetsAt = "2026-09-30T17:15:45.084Z"),
+            weekly = ZenGoWindow(status = "ok", percent = 25.0, resetsAt = "2026-10-05T00:00:00.000Z"),
+            monthly = ZenGoWindow(status = "ok", percent = 29.5, resetsAt = "2026-10-21T07:45:46.000Z"),
+        )
+        // now = 2026-09-30T17:00:00Z
+        val nowMs = 1_790_787_600_000L
+        val windows = usage.toWindows(nowMs)
+        assertEquals(3, windows.size)
+        assertEquals(QuotaWindowKind.FIVE_HOUR, windows[0].kind)
+        assertEquals(1.0, windows[0].usedPercent)
+        assertEquals(QuotaWindowKind.WEEKLY, windows[1].kind)
+        assertEquals(25.0, windows[1].usedPercent)
+        assertEquals(QuotaWindowKind.MONTHLY, windows[2].kind)
+        assertEquals(29.5, windows[2].usedPercent)
+        assertTrue((windows[0].resetInSec ?: -1L) > 0L)
     }
 
     @Test
-    fun findWorkspacesServerFnId_fromCreateServerReference() {
-        val js = """
-            const getWorkspaces_query = createServerReference("def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f");
-            const getWorkspaces = query(getWorkspaces_query, "workspaces");
-        """.trimIndent()
-        assertEquals(
-            "def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f",
-            OpenCodeGoClient.findWorkspacesServerFnId(js),
+    fun toWindows_skipsMissingWindows() {
+        val usage = ZenGoUsage(
+            weekly = ZenGoWindow(status = "ok", percent = 10.0, resetsAt = null),
         )
+        val windows = usage.toWindows(1_790_787_600_000L)
+        assertEquals(1, windows.size)
+        assertEquals(QuotaWindowKind.WEEKLY, windows.single().kind)
+        assertNull(windows.single().resetInSec)
     }
 
     @Test
-    fun findWorkspacesServerFnId_fromMinifiedWorkspaceChunk() {
-        val js = """
-            const getWorkspaces_query = createServerReference("def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f");
-            const getWorkspaces = query(getWorkspaces_query, "workspaces");
-        """.replace("\n", "")
-        assertEquals(
-            "def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f",
-            OpenCodeGoClient.findWorkspacesServerFnId(js),
-        )
+    fun parseResetsAtUtc_parsesMillisecondTimestamp() {
+        // 2026-09-30T17:15:45.084Z
+        assertEquals(1_790_788_545_084L, OpenCodeGoClient.parseResetsAtUtc("2026-09-30T17:15:45.084Z"))
     }
 
     @Test
-    fun findWorkspacesServerFnId_ignoresBlackSubscribeWorkspaces() {
-        val js = """
-            const getWorkspaces_query = createServerReference("e9cc590d6b3cc20debdfdcef27f0801696ac84f47188c42cb4348d0401f3eb44");
-            const getWorkspaces = query(getWorkspaces_query, "black.subscribe.workspaces");
-            const getWorkspaces_query2 = createServerReference("def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f");
-            const getWorkspaces2 = query(getWorkspaces_query2, "workspaces");
-        """.trimIndent()
-        assertEquals(
-            "def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f",
-            OpenCodeGoClient.findWorkspacesServerFnId(js),
-        )
+    fun parseResetsAtUtc_parsesSecondPrecisionTimestamp() {
+        // 2026-10-05T00:00:00Z
+        assertNotNull(OpenCodeGoClient.parseResetsAtUtc("2026-10-05T00:00:00Z"))
     }
 
     @Test
-    fun looksLikeLoginPage_whenNoUsageData() {
-        assertTrue(
-            OpenCodeGoClient.looksLikeLoginPage(
-                """<html><a href="/auth/authorize">Sign in</a></html>""",
-            ),
-        )
-        assertFalse(
-            OpenCodeGoClient.looksLikeLoginPage(
-                """;0x00000010;(${'$'}R => ${'$'}R[0] = { rollingUsage: {} })""",
-            ),
-        )
+    fun parseResetsAtUtc_rejectsGarbage() {
+        assertNull(OpenCodeGoClient.parseResetsAtUtc(null))
+        assertNull(OpenCodeGoClient.parseResetsAtUtc(""))
+        assertNull(OpenCodeGoClient.parseResetsAtUtc("not-a-date"))
+        assertNull(OpenCodeGoClient.parseResetsAtUtc("2026-13-01T00:00:00Z"))
+    }
+
+    @Test
+    fun resetInSec_countsDownToReset() {
+        val resetsAt = "2026-09-30T17:15:45Z"
+        val resetsMs = OpenCodeGoClient.parseResetsAtUtc(resetsAt)
+        assertNotNull(resetsMs)
+        assertEquals(945L, OpenCodeGoClient.resetInSec(resetsAt, resetsMs - 945_000L))
+        assertEquals(0L, OpenCodeGoClient.resetInSec(resetsAt, resetsMs + 60_000L))
     }
 }

@@ -86,8 +86,6 @@ fun HomeScreen(
     val listState = rememberLazyListState()
     val msgNeedsReauth = stringResource(R.string.widget_needs_reauth)
     val msgLoadingBalance = stringResource(R.string.widget_loading_balance)
-    val msgOpenCodeWorkspaceMissing = stringResource(R.string.opencode_workspace_missing)
-    val msgOpenCodeWorkspacesLoadFailed = stringResource(R.string.opencode_workspaces_load_failed)
 
     var showBatteryOptimizationTip by remember {
         mutableStateOf(!context.isIgnoringBatteryOptimizations())
@@ -103,7 +101,7 @@ fun HomeScreen(
     val newApi = rememberNewApiHomeState(settingsRepository)
 
     val deepSeekWidgetState = DeepSeekHomeEffects(deepSeek)
-    val openCodeBindings = OpenCodeGoHomeEffects(openCode, onRefreshPlatform)
+    val openCodeBindings = OpenCodeGoHomeEffects(openCode)
     val codexBindings = CodexHomeEffects(codex, onRefreshPlatform)
     val newApiWidgetState = NewApiHomeEffects(newApi)
 
@@ -171,12 +169,6 @@ fun HomeScreen(
         if (showPullIndicator) isRefreshing = true
         try {
             onRefreshAllConfigured()
-            if (openCode.isConfigured) {
-                openCode.reloadWorkspacesForHomeRefresh(
-                    msgWorkspaceMissing = msgOpenCodeWorkspaceMissing,
-                    msgWorkspacesLoadFailed = msgOpenCodeWorkspacesLoadFailed,
-                )
-            }
             WidgetGlanceState.syncAndUpdate(context, "home_refresh")
         } finally {
             if (showPullIndicator) isRefreshing = false

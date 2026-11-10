@@ -39,7 +39,6 @@ import com.kuyermqi.quotawidget.QuotaWidgetApp
 import com.kuyermqi.quotawidget.R
 import com.kuyermqi.quotawidget.domain.AppSettings
 import com.kuyermqi.quotawidget.domain.codex.CodexLoginWebViewFlow
-import com.kuyermqi.quotawidget.domain.opencode.OpenCodeLoginWebViewFlow
 import com.kuyermqi.quotawidget.ui.theme.AppNightMode
 import com.kuyermqi.quotawidget.ui.theme.QuotaWidgetTheme
 
@@ -173,7 +172,6 @@ class InAppWebViewActivity : ComponentActivity(), InAppWebViewHost {
 
     private fun createFlow(flowId: String): InAppWebViewFlow? =
         when (flowId) {
-            OpenCodeLoginWebViewFlow.FLOW_ID -> OpenCodeLoginWebViewFlow(this)
             CodexLoginWebViewFlow.FLOW_ID -> CodexLoginWebViewFlow.fromIntent(this, intent)
             else -> null
         }

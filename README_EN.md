@@ -39,7 +39,7 @@
 | Platform | Displays | Widgets |
 |----------|----------|---------|
 | **DeepSeek** | API account balance | Standard · Compact |
-| **OpenCode Go** | Rolling / weekly / monthly usage or remaining (configurable) | Standard · Compact · Overview |
+| **OpenCode Go** | Rolling / weekly / monthly usage or remaining (API key) | Standard · Compact · Overview |
 | **Codex** | Weekly / monthly usage or remaining (in-app OAuth login) | Standard · Compact · Overview |
 | **NewAPI** | Token balance (USD) and usage/remaining percent (configurable Base URL + API Key) | Balance standard · Balance compact · Usage |
 

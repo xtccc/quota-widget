@@ -19,10 +19,7 @@ class OpenCodeGoQuotaProvider(
 
     override suspend fun fetch(repo: PlatformSettingsRepository): QuotaSnapshot {
         val settings = repo.getOpenCodeGoSettings()
-        require(settings.isConfigured) { "OpenCode Go 未登录" }
-        return client.fetchQuota(
-            workspaceId = settings.workspaceId,
-            authCookie = settings.authCookie,
-        )
+        require(settings.isConfigured) { "OpenCode Go API Key 未配置" }
+        return client.fetchQuota(apiKey = settings.apiKey)
     }
 }

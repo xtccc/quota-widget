@@ -125,7 +125,7 @@ class BalanceRefreshInteractorTest {
     @Test
     fun refresh_routesToOpenCodeProvider() = runTest {
         val repo = FakePlatformSettingsRepository(
-            openCode = OpenCodeGoSettings(workspaceId = "wrk_abc", authCookie = "cookie"),
+            openCode = OpenCodeGoSettings(apiKey = "oc_sk_test"),
         )
         val openCodeSnapshot = QuotaSnapshot(
             platformId = PlatformIds.OPENCODE_GO,
@@ -164,7 +164,7 @@ class BalanceRefreshInteractorTest {
             updatedAtEpochMs = 1L,
         )
         val repo = FakePlatformSettingsRepository(
-            openCode = OpenCodeGoSettings(workspaceId = "wrk_abc", authCookie = "cookie"),
+            openCode = OpenCodeGoSettings(apiKey = "oc_sk_test"),
             widgetStates = mapOf(PlatformIds.OPENCODE_GO to WidgetDisplayState.Success(previous)),
         )
         val interactor = BalanceRefreshInteractor(
@@ -183,7 +183,7 @@ class BalanceRefreshInteractorTest {
     fun refreshAllConfigured_refreshesBoth_withoutCrossContamination() = runTest {
         val repo = FakePlatformSettingsRepository(
             deepSeek = DeepSeekSettings(apiKey = "sk-test"),
-            openCode = OpenCodeGoSettings(workspaceId = "wrk_abc", authCookie = "cookie"),
+            openCode = OpenCodeGoSettings(apiKey = "oc_sk_test"),
         )
         val interactor = BalanceRefreshInteractor(
             repo,

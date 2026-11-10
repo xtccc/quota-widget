@@ -68,11 +68,11 @@
     <string name="platform_tip">在下方修改对应平台的配置</string>
     <string name="tip_dismiss">关闭提示</string>
     <string name="in_app_webview_back">返回</string>
-    <string name="opencode_login_title">登录 OpenCode</string>
-    <string name="opencode_login">登录账号</string>
-    <string name="opencode_logout">退出登录</string>
-    <string name="opencode_status_logged_out">未登录</string>
-    <string name="opencode_login_failed">登录未完成，请重试</string>
+    <string name="opencode_api_key_label">API Key</string>
+    <string name="opencode_api_key_hint">oc_sk_…</string>
+    <string name="opencode_api_key_help">在 OpenCode Console 的 Account → Personal API keys（或 Settings → Service accounts）创建，选择对应 Workspace 后粘贴到此处。配额通过官方接口 https://opencode.ai/zen/go/v1/usage 查询，不再需要网页登录。</string>
+    <string name="opencode_clear">清除</string>
+    <string name="opencode_status_logged_out">未配置</string>
     <string name="usage_window_rolling">滚动用量</string>
     <string name="usage_window_five_hour">5H 用量</string>
     <string name="usage_window_weekly">每周用量</string>
@@ -99,9 +99,6 @@
     <string name="usage_used_token">令牌用量 %1$s</string>
     <string name="usage_resets_in">%1$s后重置</string>
     <string name="usage_resets_unknown">重置时间未知</string>
-    <string name="opencode_workspace_label">Workspace</string>
-    <string name="opencode_workspaces_load_failed">无法加载 Workspace 列表</string>
-    <string name="opencode_workspace_missing">当前 Workspace 已失效，请重新选择并保存</string>
     <string name="usage_unavailable">暂无数据</string>
     <string name="codex_login_title">登录 Codex</string>
     <string name="codex_login">登录账号</string>
