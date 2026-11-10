@@ -33,3 +33,9 @@ jobs:
       - name: Build debug APK
         run: |
           ./gradlew :androidApp:assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: quota-widget-debug
+          path: androidApp/build/outputs/apk/debug/*.apk
